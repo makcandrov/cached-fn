@@ -6,14 +6,14 @@
 ///
 /// Once the function is called, its output is stored and subsequent calls will return the cached
 /// value instead of recomputing it.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone)]
 pub struct CachedFn<F, Output>(CachedFnInner<F, Output>);
 
 /// Internal state of a [`CachedFn`].
 ///
 /// This enum tracks whether the function has been called, is still pending, or was poisoned due to
 /// a failed or in-progress call.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone)]
 enum CachedFnInner<F, Output> {
     /// Function has not been called yet.
     NotCalled(F),
@@ -25,6 +25,25 @@ enum CachedFnInner<F, Output> {
     ///
     /// This prevents reentrancy and ensures partial computation doesn't leak.
     Poisoned,
+}
+
+impl<F, Output> ::core::fmt::Debug for CachedFn<F, Output>
+where
+    Output: ::core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        match &self.0 {
+            CachedFnInner::NotCalled(_) => f
+                .debug_tuple("CachedFn")
+                .field(&::core::format_args!("<not called>"))
+                .finish(),
+            CachedFnInner::Called(output) => f.debug_tuple("CachedFn").field(output).finish(),
+            CachedFnInner::Poisoned => f
+                .debug_tuple("CachedFn")
+                .field(&::core::format_args!("<poisoned>"))
+                .finish(),
+        }
+    }
 }
 
 impl<F, Output> CachedFnInner<F, Output> {

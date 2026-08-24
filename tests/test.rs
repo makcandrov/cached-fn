@@ -16,3 +16,19 @@ fn test_cached_fn() {
 
     assert_eq!(x, 1);
 }
+
+#[test]
+fn test_debug() {
+    let mut cached_f = CachedFn::<_, usize>::new(|| 42);
+    assert_eq!(format!("{cached_f:?}"), "CachedFn(<not called>)");
+
+    cached_f.call();
+    assert_eq!(format!("{cached_f:?}"), "CachedFn(42)");
+    assert_eq!(format!("{cached_f:#?}"), "CachedFn(\n    42,\n)");
+
+    let mut poisoned = CachedFn::<_, usize>::new(|| panic!("boom"));
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        poisoned.call();
+    }));
+    assert_eq!(format!("{poisoned:?}"), "CachedFn(<poisoned>)");
+}
